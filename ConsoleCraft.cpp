@@ -68,7 +68,7 @@ public:
     static Color MAGENTA;
     static Color CYAN;
     static Color WHITE;
-    static Color BRIGHT_BLACK;
+    static Color GREY;
     static Color BRIGHT_RED;
     static Color BRIGHT_GREEN;
     static Color BRIGHT_YELLOW;
@@ -103,7 +103,7 @@ Color Color::BLUE = Color(4, false);
 Color Color::MAGENTA = Color(5, false);
 Color Color::CYAN = Color(6, false);
 Color Color::WHITE = Color(7, false);
-Color Color::BRIGHT_BLACK = Color(0, true); // lol
+Color Color::GREY = Color(0, true);
 Color Color::BRIGHT_RED = Color(1, true);
 Color Color::BRIGHT_GREEN = Color(2, true);
 Color Color::BRIGHT_YELLOW = Color(3, true);
@@ -983,10 +983,11 @@ int main(){
 			std::cout << "          Press any key to continue...";
 
 			mygotoxy(3, 21);
-			std::cout << ".at(Hint: Try placing stone on top of stone to create walls and ore on top of";
+			std::cout << "[Hint: Try placing stone on top of stone to create walls and ore on top of";
 			mygotoxy(3, 22);
-			std::cout << "     dirt to create doors)";
+			std::cout << "     dirt to create doors]";
 
+            std::cout.flush();
 			mygetch();
 			redraw = true;
 			redraw_player = true;
@@ -1251,6 +1252,7 @@ int main(){
 
 		//redraw whole screen
 		if (redraw){
+            clearScreen();
 			for (int x_index = 0; x_index <= 79; x_index++){
 				for (int y_index = 0; y_index <= 24; y_index++){
 					mygotoxy(x_index, y_index);
@@ -1421,6 +1423,7 @@ int main(){
 		textColor(Color::BLACK, Color::BRIGHT_WHITE);
 
 		if (!quit){
+            std::cout.flush();
 			key = mygetch();
 		}
 	}
