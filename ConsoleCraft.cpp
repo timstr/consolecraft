@@ -123,18 +123,18 @@ void clearScreen(){
 	std::cout << "\033[2J";
 }
 
-void drawLine(int start_x, int start_y, int end_x, int end_y, wchar_t symbol, Color symbol_color){
+void drawLine(int start_x, int start_y, int end_x, int end_y, char const* symbol, Color symbol_color){
 	textColor(Color::BLACK, symbol_color);
 	int distance = ((end_x - start_x) + (end_y - start_y));
 	for (int i = 0; i <= distance; i++){
 		int symbol_x = start_x + ((i * (end_x - start_x)) / distance);
 		int symbol_y = start_y + ((i * (end_y - start_y)) / distance);
 		mygotoxy(symbol_x, symbol_y);
-		std::wcout << symbol;
+		std::cout << symbol;
 	}
 }
 
-void drawBox(int sx, int sy, int ex, int ey, wchar_t symbol, Color symbol_color, const std::wstring& title, bool empty = false){
+void drawBox(int sx, int sy, int ex, int ey, char const* symbol, Color symbol_color, char const* title, bool empty = false){
 	drawLine(sx, sy, sx, ey, symbol, symbol_color);
 	drawLine(sx, sy, ex, sy, symbol, symbol_color);
 	drawLine(ex, sy, ex, ey, symbol, symbol_color);
@@ -143,38 +143,40 @@ void drawBox(int sx, int sy, int ex, int ey, wchar_t symbol, Color symbol_color,
 		for (int box_x = 1; box_x < ex - sx; box_x++){
 			for (int box_y = 1; box_y < ey - sy; box_y++){
 				mygotoxy(sx + box_x, sy + box_y);
-				std::wcout << L" ";
+				std::cout << " ";
 			}
 		}
 	}
 	mygotoxy(sx + 1, sy);
-	std::wcout << title;
+	std::cout << title;
 }
 
 int main(){
+    clearScreen();
+    mygotoxy(0, 0);
 	textColor(Color::GREEN, Color::BRIGHT_WHITE);
-	std::wcout << L"                                                                                ";
-	std::wcout << L"                                  Welcome to                                    ";
-	std::wcout << L"                                                                                ";
-	textColor(Color::RED, Color::BRIGHT_YELLOW);
-	std::wcout << L"                                                                                ";
-	std::wcout << L"              ### ### #   # ### ### #   ###    ### ###  #  ### ###              ";
-	std::wcout << L"              #   # # ##  # #   # # #   #      #   # # # # #    #               ";
-	std::wcout << L"              #   # # # # # ### # # #   ##  ## #   ### ### ##   #               ";
-	std::wcout << L"              #   # # #  ##   # # # #   #      #   ##  # # #    #               ";
-	std::wcout << L"              ### ### #   # ### ### ### ###    ### # # # # #    #               ";
-	std::wcout << L"                                                                                ";
+	std::cout << "                                                                                \n";
+	std::cout << "                                  Welcome to                                    \n";
+	std::cout << "                                                                                \n";
+	textColor(Color::BLUE, Color::BRIGHT_GREEN);
+	std::cout << "                                                                                \n";
+	std::cout << "              ### ### #   # ### ### #   ###    ### ###  #  ### ###              \n";
+	std::cout << "              #   # # ##  # #   # # #   #      #   # # # # #    #               \n";
+	std::cout << "              #   # # # # # ### # # #   ##  ## #   ### ### ##   #               \n";
+	std::cout << "              #   # # #  ##   # # # #   #      #   ##  # # #    #               \n";
+	std::cout << "              ### ### #   # ### ### ### ###    ### # # # # #    #               \n";
+	std::cout << "                                                                                \n";
 	textColor(Color::GREEN, Color::BRIGHT_WHITE);
-	std::wcout << L"                              By Tim Straubinger                                ";
-	std::wcout << L"                                                                                ";
+	std::cout << "                              By Tim Straubinger                                \n";
+	std::cout << "                                                                                \n";
 
 	mygotoxy(20, 15);
 	textColor(Color::BLACK, Color::BRIGHT_WHITE);
-	std::wcout << L"Enter a world seed (0 for random one): ";
+	std::cout << "Enter a world seed (0 for random one): ";
 
 	unsigned int seed;
 
-	std::wcin >> seed;
+	std::cin >> seed;
 
 	if (seed == 0){
 		seed = (unsigned)time(0);
@@ -184,43 +186,43 @@ int main(){
 	int difficulty = 0;
 
 	mygotoxy(25, 18);
-	std::wcout << L"1 - Piece of cake";
+	std::cout << "1 - Piece of cake";
 	mygotoxy(25, 19);
-	std::wcout << L"2 - Moderate";
+	std::cout << "2 - Moderate";
 	mygotoxy(25, 20);
-	std::wcout << L"3 - Tricky";
+	std::cout << "3 - Tricky";
 	mygotoxy(25, 21);
-	std::wcout << L"4 - Extreme";
+	std::cout << "4 - Extreme";
 	mygotoxy(20, 17);
-	std::wcout << L"Please select a difficulty: ";
+	std::cout << "Please select a difficulty: ";
 	while (!(difficulty >= 1 && difficulty <= 4)){
-		std::wcin >> difficulty;
+		std::cin >> difficulty;
 		if (difficulty < 1 || difficulty > 4){
-			drawLine(0, 17, 79, 17, L' ', Color::BRIGHT_WHITE);
+			drawLine(0, 17, 79, 17, " ", Color::BRIGHT_WHITE);
 			mygotoxy(20, 17);
-			std::wcout << L"Please select a VALID difficulty: ";
+			std::cout << "Please select a VALID difficulty: ";
 		}
 	}
 
 	clearScreen();
 
 
-	std::wcout << L"\n\n\t\tCreating materials...\n";
+	std::cout << "\n\n\t\tCreating materials...\n";
 
 	//define materials
 	const size_t num_materials = 12;
-	const std::array<std::wstring, num_materials> material_names = {L"air", L"stone", L"dirt", L"sand", L"water", L"plant", L"grass", L"snow", L"ore", L"wall", L"door", L"bedrock"};
+	const std::array<std::string, num_materials> material_names = {"air", "stone", "dirt", "sand", "water", "plant", "grass", "snow", "ore", "wal", "door", "bedrock"};
 	const std::array<Color, num_materials> material_bgcolors = {
         Color::BLACK, Color::WHITE,         Color::RED,     Color::BRIGHT_YELLOW,   Color::BLUE,        Color::GREEN,           Color::GREEN,   Color::BRIGHT_WHITE,    Color::WHITE,   Color::WHITE,   Color::RED,     Color::WHITE};
 	const std::array<Color, num_materials> material_fgcolors = {
         Color::BLACK, Color::BRIGHT_WHITE,  Color::GREEN,   Color::BRIGHT_WHITE,    Color::BRIGHT_BLUE, Color::BRIGHT_GREEN,    Color::GREEN,   Color::BLACK,           Color::YELLOW,  Color::BLACK,   Color::WHITE,   Color::BLACK};
-	const std::array<wchar_t, num_materials> material_chars = {L' ', L'░', L'▒', L'▒', L'≈', L'♣', L' ', L' ', L'♦', L'╬', L'■', L'░'};
+	const std::array<std::string, num_materials> material_chars = {u8" ", u8"░", u8"▒", u8"▒", u8"≈", u8"♣", u8" ", u8" ", u8"♦", u8"╬", u8"■", u8"░"};
 
 	std::array<int, num_materials> inventory = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	std::array<int, num_materials> underlying_material = {0, 11, 1, 2, 4, 6, 2, 1, 1, 1, 2, 1};
 
-	std::wcout << L"\t\tGenerating terrain...\n";
+	std::cout << "\t\tGenerating terrain...\n";
 
 	//generate terrain
 	const int width = 500, height = 500;
@@ -464,7 +466,7 @@ int main(){
 		}
 	}
 
-	std::wcout << L"\t\tPreparing game...";
+	std::cout << "\t\tPreparing game...";
 
 	//fixed vital gameplay variables
 	char key = 'r';
@@ -490,7 +492,7 @@ int main(){
 		num_monsters = 150;
 	}
 
-	std::array<wchar_t, 5> monster_chars = {L'S', L'Ω', L'@', L'¥', L'Ö'};
+	std::array<std::string, 5> monster_chars = {u8"S", u8"Ω", u8"@", u8"¥", u8"Ö"};
 	std::array<int, 151> monster_x;
 	std::array<int, 151> monster_y;
 	std::array<int, 151> monster;
@@ -513,13 +515,13 @@ int main(){
 			mygotoxy(x_index, y_index);
 			temp_material = terrain.at(x_index + x_offset).at(y_index + y_offset);
 			textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-			std::wcout << material_chars.at(temp_material);
+			std::cout << material_chars.at(temp_material);
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	}
 
 	//draw the inventory
-	drawBox(1, 26, 23, 35, L'░', Color::WHITE, L"INVENTORY");
+	drawBox(1, 26, 23, 35, u8"░", Color::WHITE, "INVENTORY");
 	for (int i = 1; i <= 8; i++){
 		mygotoxy(2, 26 + i);
 		if (i == selection){
@@ -527,59 +529,59 @@ int main(){
 		} else {
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 		}
-		std::wcout << i << L" " << material_names.at(i) << L" \t";
+		std::cout << i << " " << material_names.at(i) << " \t";
 		textColor(material_bgcolors.at(i), material_fgcolors.at(i));
-		std::wcout << material_chars.at(i);
+		std::cout << material_chars.at(i);
 		textColor(Color::BLACK, Color::BRIGHT_WHITE);
-		std::wcout << L" " << inventory.at(i) << L'\n';
+		std::cout << " " << inventory.at(i) << '\n';
 	}
 
 	//draw the help box
-	drawBox(25, 26, 40, 35, L'░', Color::WHITE, L"QUICK HELP");
+	drawBox(25, 26, 40, 35, u8"░", Color::WHITE, "QUICK HELP");
 	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	mygotoxy(26, 27);
-	std::wcout << L"w - up";
+	std::cout << "w - up";
 	mygotoxy(26, 28);
-	std::wcout << L"a - left";
+	std::cout << "a - left";
 	mygotoxy(26, 29);
-	std::wcout << L"s - down";
+	std::cout << "s - down";
 	mygotoxy(26, 30);
-	std::wcout << L"d - right";
+	std::cout << "d - right";
 	mygotoxy(26, 31);
-	std::wcout << L"m - mine";
+	std::cout << "m - mine";
 	mygotoxy(26, 32);
-	std::wcout << L"p - place";
+	std::cout << "p - place";
 	mygotoxy(26, 33);
-	std::wcout << L"q - quit";
+	std::cout << "q - quit";
 	mygotoxy(26, 34);
-	std::wcout << L"h - more help";
+	std::cout << "h - more help";
 
 	//draw the info box
-	drawBox(42, 26, 78, 35, L'░', Color::WHITE, L"INFO");
+	drawBox(42, 26, 78, 35, u8"░", Color::WHITE, "INFO");
 	mygotoxy(43, 27);
 	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	if (terrain.at(player_x).at(player_y) == 4){
-		std::wcout << L"You are standing in water.";
+		std::cout << "You are standing in water.";
 	} else if (terrain.at(player_x).at(player_y) == 5){
-		std::wcout << L"You are standing on a plant.";
+		std::cout << "You are standing on a plant.";
 	} else {
-		std::wcout << L"You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << L".";
+		std::cout << "You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << ".";
 	}
 	mygotoxy(43, 32);
-	std::wcout << L"Difficulty: L";
+	std::cout << "Difficulty: ";
 	if (difficulty == 1){
-		std::wcout << L"Piece of cake";
+		std::cout << "Piece of cake";
 	} else if (difficulty == 2){
-		std::wcout << L"Moderate";
+		std::cout << "Moderate";
 	} else if (difficulty == 3){
-		std::wcout << L"Tricky";
+		std::cout << "Tricky";
 	} else if (difficulty == 4){
-		std::wcout << L"Extreme";
+		std::cout << "Extreme";
 	}
 	mygotoxy(43, 33);
-	std::wcout << L"Health: " << health;
+	std::cout << "Health: " << health;
 	mygotoxy(43, 34);
-	std::wcout << L"Seed: " << seed;
+	std::cout << "Seed: " << seed;
 
 	//draw monsters
 	for (int i = 0; i <= num_monsters; i++){
@@ -589,7 +591,7 @@ int main(){
 
 			mygotoxy(monster_x.at(i) - x_offset, monster_y.at(i) - y_offset);
 			textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), Color::BLACK);
-			std::wcout << monster_chars.at(monster.at(i));
+			std::cout << monster_chars.at(monster.at(i));
 		}
 	}
 
@@ -600,25 +602,25 @@ int main(){
 	} else {
 		textColor(material_bgcolors.at(terrain.at(player_x).at(player_y)), material_bgcolors.at(terrain.at(player_x).at(player_y)));
 	}
-	std::wcout << L'Å';
+	std::cout << u8"Å";
 
 	//draw dividers
-	drawLine(0, 25, 79, 25, L'░', Color::BLUE);
-	drawLine(0, 36, 79, 36, L'░', Color::BLUE);
-	drawLine(0, 25, 0, 36, L'░', Color::BLUE);
-	drawLine(24, 25, 24, 36, L'░', Color::BLUE);
-	drawLine(41, 25, 41, 36, L'░', Color::BLUE);
-	drawLine(79, 25, 79, 36, L'░', Color::BLUE);
+	drawLine(0, 25, 79, 25, u8"░", Color::BLUE);
+	drawLine(0, 36, 79, 36, u8"░", Color::BLUE);
+	drawLine(0, 25, 0, 36, u8"░", Color::BLUE);
+	drawLine(24, 25, 24, 36, u8"░", Color::BLUE);
+	drawLine(41, 25, 41, 36, u8"░", Color::BLUE);
+	drawLine(79, 25, 79, 36, u8"░", Color::BLUE);
 
 	//draw the alert to maximise the window
-	drawBox(19, 5, 59, 9, L'░', Color::WHITE, L"ALERT", true);
+	drawBox(19, 5, 59, 9, u8"░", Color::WHITE, "ALERT", true);
 	mygotoxy(20, 6);
 	textColor(Color::BLACK, Color::BRIGHT_WHITE);
-	std::wcout << L"Please maximize this window, or resize";
+	std::cout << "Please maximize this window, or resize";
 	mygotoxy(20, 7);
-	std::wcout << L"it to fit all components of the game.";
+	std::cout << "it to fit all components of the game.";
 	mygotoxy(20, 8);
-	std::wcout << L"Press any key to begin...";
+	std::cout << "Press any key to begin...";
 
 	mygotoxy(0, 0);
 	mygetch();
@@ -707,26 +709,26 @@ int main(){
 		if (key == 'm'){
 			mygotoxy(43, 28);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
-			std::wcout << L"Select a direction to mine...";
+			std::cout << "Select a direction to mine...";
 			if (testRange(79, 24, player_x - x_offset - 1, player_y - y_offset)){
 				mygotoxy(player_x - x_offset - 1, player_y - y_offset);
 				textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), Color::BLACK);
-				std::wcout << L'◄';
+				std::cout << u8"◄";
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset - 1);
 				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), Color::BLACK);
-				std::wcout << L'▲';
+				std::cout << u8"▲";
 			}
 			if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 				mygotoxy(player_x - x_offset + 1, player_y - y_offset);
 				textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), Color::BLACK);
-				std::wcout << L'►';
+				std::cout << u8"►";
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset + 1);
 				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), Color::BLACK);
-				std::wcout << L'▼';
+				std::cout << u8"▼";
 			}
 			char direction = mygetch();
 			if (direction == 'w'){
@@ -794,25 +796,25 @@ int main(){
 				mygotoxy(player_x - x_offset - 1, player_y - y_offset);
 				temp_material = terrain.at(player_x - 1).at(player_y);
 				textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-				std::wcout << material_chars.at(temp_material);
+				std::cout << material_chars.at(temp_material);
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset - 1);
 				temp_material = terrain.at(player_x).at(player_y - 1);
 				textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-				std::wcout << material_chars.at(temp_material);
+				std::cout << material_chars.at(temp_material);
 			}
 			if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 				mygotoxy(player_x - x_offset + 1, player_y - y_offset);
 				temp_material = terrain.at(player_x + 1).at(player_y);
 				textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-				std::wcout << material_chars.at(temp_material);
+				std::cout << material_chars.at(temp_material);
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset + 1);
 				temp_material = terrain.at(player_x).at(player_y + 1);
 				textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-				std::wcout << material_chars.at(temp_material);
+				std::cout << material_chars.at(temp_material);
 			}
 
 			redraw_help = true;
@@ -820,7 +822,7 @@ int main(){
 
 			mygotoxy(43, 28);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
-			std::wcout << L"                              ";
+			std::cout << "                              ";
 		}
 		if (key == 'p'){
 			mygotoxy(43, 28);
@@ -828,28 +830,28 @@ int main(){
 
 			if (inventory.at(selection) > 0){
 				mygotoxy(43, 28);
-				std::wcout << L"Select a direction to place a";
+				std::cout << "Select a direction to place a";
 				mygotoxy(43, 29);
-				std::wcout << L"block...";
+				std::cout << "block...";
 				if (testRange(79, 24, player_x - x_offset - 1, player_y - y_offset)){
 					mygotoxy(player_x - x_offset - 1, player_y - y_offset);
 					textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), Color::BLACK);
-					std::wcout << L'◄';
+					std::cout << u8"◄";
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset - 1);
 					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), Color::BLACK);
-					std::wcout << L'▲';
+					std::cout << u8"▲";
 				}
 				if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 					mygotoxy(player_x - x_offset + 1, player_y - y_offset);
 					textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), Color::BLACK);
-					std::wcout << L'►';
+					std::cout << u8"►";
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset + 1);
 					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), Color::BLACK);
-					std::wcout << L'▼';
+					std::cout << u8"▼";
 				}
 
 				char direction = mygetch();
@@ -907,25 +909,25 @@ int main(){
 					mygotoxy(player_x - x_offset - 1, player_y - y_offset);
 					temp_material = terrain.at(player_x - 1).at(player_y);
 					textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-					std::wcout << material_chars.at(temp_material);
+					std::cout << material_chars.at(temp_material);
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset - 1);
 					temp_material = terrain.at(player_x).at(player_y - 1);
 					textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-					std::wcout << material_chars.at(temp_material);
+					std::cout << material_chars.at(temp_material);
 				}
 				if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 					mygotoxy(player_x - x_offset + 1, player_y - y_offset);
 					temp_material = terrain.at(player_x + 1).at(player_y);
 					textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-					std::wcout << material_chars.at(temp_material);
+					std::cout << material_chars.at(temp_material);
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset + 1);
 					temp_material = terrain.at(player_x).at(player_y + 1);
 					textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-					std::wcout << material_chars.at(temp_material);
+					std::cout << material_chars.at(temp_material);
 				}
 
 				redraw_help = true;
@@ -935,55 +937,55 @@ int main(){
 
 			mygotoxy(43, 28);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
-			std::wcout << L"                              ";
+			std::cout << "                              ";
 			mygotoxy(43, 29);
-			std::wcout << L"                              ";
+			std::cout << "                              ";
 			mygotoxy(43, 30);
-			std::wcout << L"                              ";
+			std::cout << "                              ";
 		}
 		if (key == 'h'){
-			drawBox(1, 1, 78, 23, L'░', Color::WHITE, L"HELP", true);
+			drawBox(1, 1, 78, 23, u8"░", Color::WHITE, "HELP", true);
 
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			mygotoxy(3, 3);
-			std::wcout << L"Moving Around - use the keys 'w' (up), 'a' (left), 's' (down) and 'd'";
+			std::cout << "Moving Around - use the keys 'w' (up), 'a' (left), 's' (down) and 'd'";
 			mygotoxy(3, 4);
-			std::wcout << L"     (right) to move the player around.";
+			std::cout << "     (right) to move the player around.";
 			mygotoxy(3, 5);
-			std::wcout << L"Mining - press 'm' to mine, then select a direction using 'w', 'a , 's' or";
+			std::cout << "Mining - press 'm' to mine, then select a direction using 'w', 'a , 's' or";
 			mygotoxy(3, 6);
-			std::wcout << L"     'd', or press 'm' again to cancel. The material you mine will be added";
+			std::cout << "     'd', or press 'm' again to cancel. The material you mine will be added";
 			mygotoxy(3, 7);
-			std::wcout << L"     to your inventory.";
+			std::cout << "     to your inventory.";
 			mygotoxy(3, 8);
-			std::wcout << L"Placing Blocks - press 'p' to place a selected block from your inventory,"; 
+			std::cout << "Placing Blocks - press 'p' to place a selected block from your inventory,"; 
 			mygotoxy(3, 9);
-			std::wcout << L"     using the direction keys for where you want to place the block.";
+			std::cout << "     using the direction keys for where you want to place the block.";
 			mygotoxy(3, 10);
-			std::wcout << L"Selecting Blocks - to choose a block in your inventory that you want to";
+			std::cout << "Selecting Blocks - to choose a block in your inventory that you want to";
 			mygotoxy(3, 11);
-			std::wcout << L"      place, press the corresponding number key.";
+			std::cout << "      place, press the corresponding number key.";
 			mygotoxy(3, 12);
-			std::wcout << L"Refreshing the Screen - if at any point you're fed up with the all the";
+			std::cout << "Refreshing the Screen - if at any point you're fed up with the all the";
 			mygotoxy(3, 13);
-			std::wcout << L"     visual flaws that are ruining your gaming experience, press 'r' to";
+			std::cout << "     visual flaws that are ruining your gaming experience, press 'r' to";
 			mygotoxy(3, 14);
-			std::wcout << L"     refresh the game display.";
+			std::cout << "     refresh the game display.";
 			mygotoxy(3, 15);
-			std::wcout << L"Exiting - plain and simple, press 'q' to close the game.";
+			std::cout << "Exiting - plain and simple, press 'q' to close the game.";
 			mygotoxy(3, 16);
-			std::wcout << L"Time Passage - time passes each time you perform and action, such as moving";
+			std::cout << "Time Passage - time passes each time you perform and action, such as moving";
 			mygotoxy(3, 17);
-			std::wcout << L"     or mining a block. To allow time to pass while not doing anything,";
+			std::cout << "     or mining a block. To allow time to pass while not doing anything,";
 			mygotoxy(3, 18);
-			std::wcout << L"     simply hold down any non-functional key.";
+			std::cout << "     simply hold down any non-functional key.";
 			mygotoxy(3, 19);
-			std::wcout << L"          Press any key to continue...";
+			std::cout << "          Press any key to continue...";
 
 			mygotoxy(3, 21);
-			std::wcout << L".at(Hint: Try placing stone on top of stone to create walls and ore on top of";
+			std::cout << ".at(Hint: Try placing stone on top of stone to create walls and ore on top of";
 			mygotoxy(3, 22);
-			std::wcout << L"     dirt to create doors)";
+			std::cout << "     dirt to create doors)";
 
 			mygetch();
 			redraw = true;
@@ -993,13 +995,13 @@ int main(){
 			selection = key - '0';
 		}
 		if (key == 'q'){
-			drawBox(19, 5, 59, 9, L'░', Color::WHITE, L"ALERT", true);
+			drawBox(19, 5, 59, 9, u8"░", Color::WHITE, "ALERT", true);
 			mygotoxy(20, 6);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
-			std::wcout << L"Are you sure you want to quit? (y/n) ";
-			wchar_t answer = L'\0';
-			std::wcin >> answer;
-			if (answer == L'y'){
+			std::cout << "Are you sure you want to quit? (y/n) ";
+			char answer = '\0';
+			std::cin >> answer;
+			if (answer == 'y'){
 				quit = true;
 			} else {
 				redraw = true;
@@ -1057,7 +1059,7 @@ int main(){
 									mygotoxy(temp_x - x_offset, temp_y - y_offset);
 									temp_material = terrain.at(temp_x).at(temp_y);
 									textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-									std::wcout << material_chars.at(temp_material);
+									std::cout << material_chars.at(temp_material);
 									if (temp_x == player_x && temp_y == player_y){
 										redraw_player = true;
 										redraw_info = true;
@@ -1091,7 +1093,7 @@ int main(){
 									mygotoxy(temp_x - x_offset, temp_y - y_offset);
 									temp_material = terrain.at(temp_x).at(temp_y);
 									textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-									std::wcout << material_chars.at(temp_material);
+									std::cout << material_chars.at(temp_material);
 									if (temp_x == player_x && temp_y == player_y){
 										redraw_player = true;
 										redraw_info = true;
@@ -1125,7 +1127,7 @@ int main(){
 									mygotoxy(temp_x - x_offset, temp_y - y_offset);
 									temp_material = terrain.at(temp_x).at(temp_y);
 									textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-									std::wcout << material_chars.at(temp_material);
+									std::cout << material_chars.at(temp_material);
 									if (temp_x == player_x && temp_y == player_y){
 										redraw_player = true;
 										redraw_info = true;
@@ -1158,7 +1160,7 @@ int main(){
 								mygotoxy(temp_x - x_offset, temp_y - y_offset);
 								temp_material = terrain.at(temp_x).at(temp_y);
 								textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-								std::wcout << material_chars.at(temp_material);
+								std::cout << material_chars.at(temp_material);
 								if (temp_x == player_x && temp_y == player_y){
 									redraw_player = true;
 									redraw_info = true;
@@ -1185,7 +1187,7 @@ int main(){
 							mygotoxy(temp_x - x_offset, temp_y - y_offset);
 							temp_material = terrain.at(temp_x).at(temp_y);
 							textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-							std::wcout << material_chars.at(temp_material);
+							std::cout << material_chars.at(temp_material);
 							if (temp_x == player_x && temp_y == player_y){
 								redraw_player = true;
 								redraw_info = true;
@@ -1202,7 +1204,7 @@ int main(){
 							mygotoxy(temp_x - x_offset, temp_y - y_offset);
 							temp_material = terrain.at(temp_x).at(temp_y);
 							textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-							std::wcout << material_chars.at(temp_material);
+							std::cout << material_chars.at(temp_material);
 							if (temp_x == player_x && temp_y == player_y){
 								redraw_player = true;
 								redraw_info = true;
@@ -1219,7 +1221,7 @@ int main(){
 							mygotoxy(temp_x - x_offset, temp_y - y_offset);
 							temp_material = terrain.at(temp_x).at(temp_y);
 							textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-							std::wcout << material_chars.at(temp_material);
+							std::cout << material_chars.at(temp_material);
 							if (temp_x == player_x && temp_y == player_y){
 								redraw_player = true;
 								redraw_info = true;
@@ -1236,7 +1238,7 @@ int main(){
 							mygotoxy(temp_x - x_offset, temp_y - y_offset);
 							temp_material = terrain.at(temp_x).at(temp_y);
 							textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-							std::wcout << material_chars.at(temp_material);
+							std::cout << material_chars.at(temp_material);
 							if (temp_x == player_x && temp_y == player_y){
 								redraw_player = true;
 								redraw_info = true;
@@ -1254,7 +1256,7 @@ int main(){
 					mygotoxy(x_index, y_index);
 					temp_material = terrain.at(x_index + x_offset).at(y_index + y_offset);
 					textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
-					std::wcout << material_chars.at(temp_material);
+					std::cout << material_chars.at(temp_material);
 				}
 			}
 		}
@@ -1306,14 +1308,14 @@ int main(){
 					if (testRange(79, 24, monster_oldx.at(i) - x_offset, monster_oldy.at(i) - y_offset)){
 						mygotoxy(monster_oldx.at(i) - x_offset, monster_oldy.at(i) - y_offset);
 						textColor(material_bgcolors.at(terrain.at(monster_oldx.at(i)).at(monster_oldy.at(i))), material_fgcolors.at(terrain.at(monster_oldx.at(i)).at(monster_oldy.at(i))));
-						std::wcout << material_chars.at(terrain.at(monster_oldx.at(i)).at(monster_oldy.at(i)));
+						std::cout << material_chars.at(terrain.at(monster_oldx.at(i)).at(monster_oldy.at(i)));
 					}
 				}
 
 				if (testRange(79, 24, monster_x.at(i) - x_offset, monster_y.at(i) - y_offset)){
 					mygotoxy(monster_x.at(i) - x_offset, monster_y.at(i) - y_offset);
 					textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), Color::BLACK);
-					std::wcout << monster_chars.at(monster.at(i));
+					std::cout << monster_chars.at(monster.at(i));
 				}
 			}
 		}
@@ -1326,28 +1328,28 @@ int main(){
 			} else {
 				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y)), material_bgcolors.at(terrain.at(player_x).at(player_y)));
 			}
-			std::wcout << L'Å';
+			std::cout << u8"Å";
 		}
 
 		//redraw help
 		if (redraw_help){
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			mygotoxy(26, 27);
-			std::wcout << L"w - up";
+			std::cout << "w - up";
 			mygotoxy(26, 28);
-			std::wcout << L"a - left";
+			std::cout << "a - left";
 			mygotoxy(26, 29);
-			std::wcout << L"s - down";
+			std::cout << "s - down";
 			mygotoxy(26, 30);
-			std::wcout << L"d - right";
+			std::cout << "d - right";
 			mygotoxy(26, 31);
-			std::wcout << L"m - mine";
+			std::cout << "m - mine";
 			mygotoxy(26, 32);
-			std::wcout << L"p - place";
+			std::cout << "p - place";
 			mygotoxy(26, 33);
-			std::wcout << L"q - quit";
+			std::cout << "q - quit";
 			mygotoxy(26, 34);
-			std::wcout << L"h - more help";
+			std::cout << "h - more help";
 		}
 
 		//redraw inventory
@@ -1358,11 +1360,11 @@ int main(){
 			} else {
 				textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			}
-			std::wcout << i << L" " << material_names.at(i) << L" \t";
+			std::cout << i << " " << material_names.at(i) << " \t";
 			textColor(material_bgcolors.at(i), material_fgcolors.at(i));
-			std::wcout << material_chars.at(i);
+			std::cout << material_chars.at(i);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
-			std::wcout << L" " << inventory.at(i) << L" ";
+			std::cout << " " << inventory.at(i) << " ";
 		}
 
 		//redraw info box
@@ -1370,26 +1372,26 @@ int main(){
 			mygotoxy(43, 27);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			if (terrain.at(player_x).at(player_y) == 4){
-				std::wcout << L"You are standing in water.";
+				std::cout << "You are standing in water.";
 			} else if (terrain.at(player_x).at(player_y) == 5){
-				std::wcout << L"You are standing on a plant.";
+				std::cout << "You are standing on a plant.";
 			} else {
-				std::wcout << L"You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << L".";
+				std::cout << "You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << ".";
 			}
 			mygotoxy(43, 28);
 			mygotoxy(43, 32);
-			std::wcout << L"Difficulty: ";
+			std::cout << "Difficulty: ";
 			if (difficulty == 1){
-				std::wcout << L"Piece of cake";
+				std::cout << "Piece of cake";
 			} else if (difficulty == 2){
-				std::wcout << L"Moderate";
+				std::cout << "Moderate";
 			} else if (difficulty == 3){
-				std::wcout << L"Tricky";
+				std::cout << "Tricky";
 			} else if (difficulty == 4){
-				std::wcout << L"Extreme";
+				std::cout << "Extreme";
 			}
 			mygotoxy(43, 33);
-			std::wcout << L"Health: " << health << L"   ";
+			std::cout << "Health: " << health << "   ";
 		}
 
 		//cover up the player's tracks, add a delay if in water and refresh the info 
@@ -1398,7 +1400,7 @@ int main(){
 			temp_material = terrain.at(old_x).at(old_y);
 			textColor(material_bgcolors.at(temp_material), 
 				material_fgcolors.at(temp_material));
-			std::wcout << material_chars.at(temp_material);
+			std::cout << material_chars.at(temp_material);
 
 			if (terrain.at(player_x).at(player_y) == 4){
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1407,11 +1409,11 @@ int main(){
 			mygotoxy(43, 27);
 			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			if (terrain.at(player_x).at(player_y) == 4){
-				std::wcout << L"You are standing in water.     ";
+				std::cout << "You are standing in water.     ";
 			} else if (terrain.at(player_x).at(player_y) == 5){
-				std::wcout << L"You are standing on a plant.     ";
+				std::cout << "You are standing on a plant.     ";
 			} else {
-				std::wcout << L"You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << L".     ";
+				std::cout << "You are standing on " << material_names.at(terrain.at(player_x).at(player_y)) << ".     ";
 			}
 		}
 
