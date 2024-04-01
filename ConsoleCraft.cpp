@@ -1,14 +1,13 @@
-﻿#include <iostream>
-#include <string>
-#include <vector>
-#include <array>
-#include <Windows.h>
-#include <conio.h>
-#include <random>
-#include <ctime>
+﻿#include <array>
+#include <chrono>
+#include <iostream>
 #include <math.h>
-#include <io.h>
-#include <fcntl.h>
+#include <random>
+#include <string>
+#include <termios.h>
+#include <thread>
+#include <unistd.h>
+#include <vector>
 
 #define PI 3.14159265358979323846264338
 
@@ -32,36 +31,100 @@ bool testRange(int width, int height, int x, int y){
 }
 
 void mygotoxy(short x, short y){
-	if (!SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{x, y})){
-		throw std::runtime_error("Why????");
-	}
+	std::cout << "\033[" << y << ';' << x << 'H';
 }
 
-void textColor(int bg_color, int text_color){
-	if (!SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (bg_color * 15) + text_color)){
-		throw std::runtime_error("Why????");
-	}
+char mygetch() {
+    char buf = 0;
+    auto old = termios{};
+    if (tcgetattr(0, &old) < 0) {
+        throw std::runtime_error("tcgetattr failed");
+    }
+    old.c_lflag &= ~ICANON;
+    old.c_lflag &= ~ECHO;
+    old.c_cc[VMIN] = 1;
+    old.c_cc[VTIME] = 0;
+    if (tcsetattr(0, TCSANOW, &old) < 0) {
+        throw std::runtime_error("tcsetattr failed");
+    }
+    if (read(0, &buf, 1) < 0) {
+        throw std::runtime_error("read failed");
+    }
+    old.c_lflag |= ICANON;
+    old.c_lflag |= ECHO;
+    if (tcsetattr(0, TCSADRAIN, &old) < 0) {
+        throw std::runtime_error("tcsetattr failed the second time");
+    }
+    return buf;
+}
+
+class Color {
+public:
+    static Color BLACK;
+    static Color RED;
+    static Color GREEN;
+    static Color YELLOW;
+    static Color BLUE;
+    static Color MAGENTA;
+    static Color CYAN;
+    static Color WHITE;
+    static Color BRIGHT_BLACK;
+    static Color BRIGHT_RED;
+    static Color BRIGHT_GREEN;
+    static Color BRIGHT_YELLOW;
+    static Color BRIGHT_BLUE;
+    static Color BRIGHT_MAGENTA;
+    static Color BRIGHT_CYAN;
+    static Color BRIGHT_WHITE;
+
+    std::uint8_t colorDigit() const noexcept {
+        return this->m_colorDigit;
+    }
+
+    bool isBright() const noexcept {
+        return this->m_isBright;
+    }
+
+private:
+    Color(std::uint8_t colorDigit, bool isBright) noexcept
+        : m_colorDigit(colorDigit)
+        , m_isBright(isBright)
+    {}
+
+    std::uint8_t m_colorDigit;
+    bool m_isBright;
+};
+
+Color Color::BLACK = Color(0, false);
+Color Color::RED = Color(1, false);
+Color Color::GREEN = Color(2, false);
+Color Color::YELLOW = Color(3, false);
+Color Color::BLUE = Color(4, false);
+Color Color::MAGENTA = Color(5, false);
+Color Color::CYAN = Color(6, false);
+Color Color::WHITE = Color(7, false);
+Color Color::BRIGHT_BLACK = Color(0, true); // lol
+Color Color::BRIGHT_RED = Color(1, true);
+Color Color::BRIGHT_GREEN = Color(2, true);
+Color Color::BRIGHT_YELLOW = Color(3, true);
+Color Color::BRIGHT_BLUE = Color(4, true);
+Color Color::BRIGHT_MAGENTA = Color(5, true);
+Color Color::BRIGHT_CYAN = Color(6, true);
+Color Color::BRIGHT_WHITE = Color(7, true);
+
+
+void textColor(Color bg_color, Color text_color){
+    auto bg_code = 40 + bg_color.colorDigit() + (bg_color.isBright() ? 60 : 0);
+    auto text_code = 30 + text_color.colorDigit() + (text_color.isBright() ? 60 : 0);
+	std::cout << "\033[" << bg_code << "m\033[" << text_code << 'm';
 }
 
 void clearScreen(){
-	COORD topLeft  = { 0, 0 };
-	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO screen;
-	DWORD written;
-
-	GetConsoleScreenBufferInfo(console, &screen);
-	FillConsoleOutputCharacterA(
-		console, ' ', screen.dwSize.X * screen.dwSize.Y, topLeft, &written
-	);
-	FillConsoleOutputAttribute(
-		console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE,
-		screen.dwSize.X * screen.dwSize.Y, topLeft, &written
-	);
-	SetConsoleCursorPosition(console, topLeft);
+	std::cout << "\033[2J";
 }
 
-void drawLine(int start_x, int start_y, int end_x, int end_y, wchar_t symbol, int symbol_color){
-	textColor(0, symbol_color);
+void drawLine(int start_x, int start_y, int end_x, int end_y, wchar_t symbol, Color symbol_color){
+	textColor(Color::BLACK, symbol_color);
 	int distance = ((end_x - start_x) + (end_y - start_y));
 	for (int i = 0; i <= distance; i++){
 		int symbol_x = start_x + ((i * (end_x - start_x)) / distance);
@@ -71,7 +134,7 @@ void drawLine(int start_x, int start_y, int end_x, int end_y, wchar_t symbol, in
 	}
 }
 
-void drawBox(int sx, int sy, int ex, int ey, wchar_t symbol, int symbol_color, const std::wstring& title, bool empty = false){
+void drawBox(int sx, int sy, int ex, int ey, wchar_t symbol, Color symbol_color, const std::wstring& title, bool empty = false){
 	drawLine(sx, sy, sx, ey, symbol, symbol_color);
 	drawLine(sx, sy, ex, sy, symbol, symbol_color);
 	drawLine(ex, sy, ex, ey, symbol, symbol_color);
@@ -89,13 +152,11 @@ void drawBox(int sx, int sy, int ex, int ey, wchar_t symbol, int symbol_color, c
 }
 
 int main(){
-	_setmode(_fileno(stdout), _O_U16TEXT);
-
-	textColor(2, 16);
+	textColor(Color::GREEN, Color::BRIGHT_WHITE);
 	std::wcout << L"                                                                                ";
 	std::wcout << L"                                  Welcome to                                    ";
 	std::wcout << L"                                                                                ";
-	textColor(1, 11);
+	textColor(Color::RED, Color::BRIGHT_YELLOW);
 	std::wcout << L"                                                                                ";
 	std::wcout << L"              ### ### #   # ### ### #   ###    ### ###  #  ### ###              ";
 	std::wcout << L"              #   # # ##  # #   # # #   #      #   # # # # #    #               ";
@@ -103,12 +164,12 @@ int main(){
 	std::wcout << L"              #   # # #  ##   # # # #   #      #   ##  # # #    #               ";
 	std::wcout << L"              ### ### #   # ### ### ### ###    ### # # # # #    #               ";
 	std::wcout << L"                                                                                ";
-	textColor(1, 3);
+	textColor(Color::GREEN, Color::BRIGHT_WHITE);
 	std::wcout << L"                              By Tim Straubinger                                ";
 	std::wcout << L"                                                                                ";
 
 	mygotoxy(20, 15);
-	textColor(0, 15);
+	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	std::wcout << L"Enter a world seed (0 for random one): ";
 
 	unsigned int seed;
@@ -135,7 +196,7 @@ int main(){
 	while (!(difficulty >= 1 && difficulty <= 4)){
 		std::wcin >> difficulty;
 		if (difficulty < 1 || difficulty > 4){
-			drawLine(0, 17, 79, 17, L' ', 15);
+			drawLine(0, 17, 79, 17, L' ', Color::BRIGHT_WHITE);
 			mygotoxy(20, 17);
 			std::wcout << L"Please select a VALID difficulty: ";
 		}
@@ -149,8 +210,10 @@ int main(){
 	//define materials
 	const size_t num_materials = 12;
 	const std::array<std::wstring, num_materials> material_names = {L"air", L"stone", L"dirt", L"sand", L"water", L"plant", L"grass", L"snow", L"ore", L"wall", L"door", L"bedrock"};
-	const std::array<int, num_materials> material_bgcolors = {0, 7, 4, 15, 1, 2, 2, 16, 8, 8, 4, 8};
-	const std::array<int, num_materials> material_fgcolors = {0, 8, 6, 14, 9, 12, 2, 0, 6, 8, 11, 8};
+	const std::array<Color, num_materials> material_bgcolors = {
+        Color::BLACK, Color::WHITE,         Color::RED,     Color::BRIGHT_YELLOW,   Color::BLUE,        Color::GREEN,           Color::GREEN,   Color::BRIGHT_WHITE,    Color::WHITE,   Color::WHITE,   Color::RED,     Color::WHITE};
+	const std::array<Color, num_materials> material_fgcolors = {
+        Color::BLACK, Color::BRIGHT_WHITE,  Color::GREEN,   Color::BRIGHT_WHITE,    Color::BRIGHT_BLUE, Color::BRIGHT_GREEN,    Color::GREEN,   Color::BLACK,           Color::YELLOW,  Color::BLACK,   Color::WHITE,   Color::BLACK};
 	const std::array<wchar_t, num_materials> material_chars = {L' ', L'░', L'▒', L'▒', L'≈', L'♣', L' ', L' ', L'♦', L'╬', L'■', L'░'};
 
 	std::array<int, num_materials> inventory = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -404,7 +467,7 @@ int main(){
 	std::wcout << L"\t\tPreparing game...";
 
 	//fixed vital gameplay variables
-	wchar_t key = L'r';
+	char key = 'r';
 	int temp_material, x_offset = width / 2 - 39, y_offset = height / 2 - 12, player_x = width / 2, player_y = height / 2, old_x = player_x, old_y = player_y, selection = 1;
 	double health = 100;
 	bool redraw = false;
@@ -451,29 +514,29 @@ int main(){
 			temp_material = terrain.at(x_index + x_offset).at(y_index + y_offset);
 			textColor(material_bgcolors.at(temp_material), material_fgcolors.at(temp_material));
 			std::wcout << material_chars.at(temp_material);
-			Sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	}
 
 	//draw the inventory
-	drawBox(1, 26, 23, 35, L'░', 8, L"INVENTORY");
+	drawBox(1, 26, 23, 35, L'░', Color::WHITE, L"INVENTORY");
 	for (int i = 1; i <= 8; i++){
 		mygotoxy(2, 26 + i);
 		if (i == selection){
-			textColor(0, 14);
+			textColor(Color::BLACK, Color::BRIGHT_YELLOW);
 		} else {
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 		}
 		std::wcout << i << L" " << material_names.at(i) << L" \t";
 		textColor(material_bgcolors.at(i), material_fgcolors.at(i));
 		std::wcout << material_chars.at(i);
-		textColor(0, 15);
+		textColor(Color::BLACK, Color::BRIGHT_WHITE);
 		std::wcout << L" " << inventory.at(i) << L'\n';
 	}
 
 	//draw the help box
-	drawBox(25, 26, 40, 35, L'░', 8, L"QUICK HELP");
-	textColor(0, 15);
+	drawBox(25, 26, 40, 35, L'░', Color::WHITE, L"QUICK HELP");
+	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	mygotoxy(26, 27);
 	std::wcout << L"w - up";
 	mygotoxy(26, 28);
@@ -492,9 +555,9 @@ int main(){
 	std::wcout << L"h - more help";
 
 	//draw the info box
-	drawBox(42, 26, 78, 35, L'░', 8, L"INFO");
+	drawBox(42, 26, 78, 35, L'░', Color::WHITE, L"INFO");
 	mygotoxy(43, 27);
-	textColor(0, 15);
+	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	if (terrain.at(player_x).at(player_y) == 4){
 		std::wcout << L"You are standing in water.";
 	} else if (terrain.at(player_x).at(player_y) == 5){
@@ -525,7 +588,7 @@ int main(){
 			monster_oldy.at(i) = monster_y.at(i);
 
 			mygotoxy(monster_x.at(i) - x_offset, monster_y.at(i) - y_offset);
-			textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), 0);
+			textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), Color::BLACK);
 			std::wcout << monster_chars.at(monster.at(i));
 		}
 	}
@@ -533,24 +596,24 @@ int main(){
 	//draw the player
 	mygotoxy(player_x - x_offset, player_y - y_offset);
 	if (terrain.at(player_x).at(player_y) == 7){
-		textColor(0, 15);
+		textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	} else {
 		textColor(material_bgcolors.at(terrain.at(player_x).at(player_y)), material_bgcolors.at(terrain.at(player_x).at(player_y)));
 	}
 	std::wcout << L'Å';
 
 	//draw dividers
-	drawLine(0, 25, 79, 25, L'░', 4);
-	drawLine(0, 36, 79, 36, L'░', 4);
-	drawLine(0, 25, 0, 36, L'░', 4);
-	drawLine(24, 25, 24, 36, L'░', 4);
-	drawLine(41, 25, 41, 36, L'░', 4);
-	drawLine(79, 25, 79, 36, L'░', 4);
+	drawLine(0, 25, 79, 25, L'░', Color::BLUE);
+	drawLine(0, 36, 79, 36, L'░', Color::BLUE);
+	drawLine(0, 25, 0, 36, L'░', Color::BLUE);
+	drawLine(24, 25, 24, 36, L'░', Color::BLUE);
+	drawLine(41, 25, 41, 36, L'░', Color::BLUE);
+	drawLine(79, 25, 79, 36, L'░', Color::BLUE);
 
 	//draw the alert to maximise the window
-	drawBox(19, 5, 59, 9, L'░', 8, L"ALERT", true);
+	drawBox(19, 5, 59, 9, L'░', Color::WHITE, L"ALERT", true);
 	mygotoxy(20, 6);
-	textColor(0, 15);
+	textColor(Color::BLACK, Color::BRIGHT_WHITE);
 	std::wcout << L"Please maximize this window, or resize";
 	mygotoxy(20, 7);
 	std::wcout << L"it to fit all components of the game.";
@@ -558,7 +621,7 @@ int main(){
 	std::wcout << L"Press any key to begin...";
 
 	mygotoxy(0, 0);
-	_getwch();
+	mygetch();
 
 	//game loop
 	while (!quit){
@@ -575,7 +638,7 @@ int main(){
 		old_y = player_y;
 
 		//key actions
-		if (key == L'w'){
+		if (key == 'w'){
 			if (player_y > 0 && terrain.at(player_x).at(player_y - 1) != 9){
 				if (terrain.at(player_x).at(player_y - 1) == 10){
 					if (testRange(width, height, player_x, player_y - 2)){
@@ -590,7 +653,7 @@ int main(){
 				}
 			}
 		}
-		if (key == L'a'){
+		if (key == 'a'){
 			if (player_x > 0 && terrain.at(player_x - 1).at(player_y) != 9){
 				if (terrain.at(player_x - 1).at(player_y) == 10){
 					if (testRange(width, height, player_x - 2, player_y)){
@@ -605,7 +668,7 @@ int main(){
 				}
 			}
 		}
-		if (key == L's'){
+		if (key == 's'){
 			if (player_y < 499 && terrain.at(player_x).at(player_y + 1) != 9){
 				if (terrain.at(player_x).at(player_y + 1) == 10){
 					if (testRange(width, height, player_x, player_y + 2)){
@@ -620,7 +683,7 @@ int main(){
 				}
 			}
 		}
-		if (key == L'd'){
+		if (key == 'd'){
 			if (player_y < 499 && terrain.at(player_x + 1).at(player_y) != 9){
 				if (terrain.at(player_x + 1).at(player_y) == 10){
 					if (testRange(width, height, player_x + 2, player_y)){
@@ -635,38 +698,38 @@ int main(){
 				}
 			}
 		}
-		if (key == L'r'){
+		if (key == 'r'){
 			redraw = true;
 			redraw_player = true;
 			redraw_help = true;
 			redraw_inventory = true;
 		}
-		if (key == L'm'){
+		if (key == 'm'){
 			mygotoxy(43, 28);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			std::wcout << L"Select a direction to mine...";
 			if (testRange(79, 24, player_x - x_offset - 1, player_y - y_offset)){
 				mygotoxy(player_x - x_offset - 1, player_y - y_offset);
-				textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), 0);
+				textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), Color::BLACK);
 				std::wcout << L'◄';
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset - 1);
-				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), 0);
+				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), Color::BLACK);
 				std::wcout << L'▲';
 			}
 			if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 				mygotoxy(player_x - x_offset + 1, player_y - y_offset);
-				textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), 0);
+				textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), Color::BLACK);
 				std::wcout << L'►';
 			}
 			if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 				mygotoxy(player_x - x_offset, player_y - y_offset + 1);
-				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), 0);
+				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), Color::BLACK);
 				std::wcout << L'▼';
 			}
-			wchar_t direction = _getwch();
-			if (direction == L'w'){
+			char direction = mygetch();
+			if (direction == 'w'){
 				if (testRange(width, height, player_x, player_y - 1)){
 					if (terrain.at(player_x).at(player_y - 1) == 9){
 						inventory.at(1) += 1;
@@ -681,7 +744,7 @@ int main(){
 					}
 				}
 			}
-			if (direction == L'a'){
+			if (direction == 'a'){
 				if (testRange(width, height, player_x - 1, player_y)){
 					if (terrain.at(player_x - 1).at(player_y) == 9){
 						inventory.at(1) += 1;
@@ -696,7 +759,7 @@ int main(){
 					}
 				}
 			}
-			if (direction == L's'){
+			if (direction == 's'){
 				if (testRange(width, height, player_x, player_y + 1)){
 					if (terrain.at(player_x).at(player_y + 1) == 9){
 						inventory.at(1) += 1;
@@ -711,7 +774,7 @@ int main(){
 					}
 				}
 			}
-			if (direction == L'd'){
+			if (direction == 'd'){
 				if (testRange(width, height, player_x + 1, player_y)){
 					if (terrain.at(player_x + 1).at(player_y) == 9){
 						inventory.at(1) += 1;
@@ -756,12 +819,12 @@ int main(){
 			redraw_inventory = true;
 
 			mygotoxy(43, 28);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			std::wcout << L"                              ";
 		}
-		if (key == L'p'){
+		if (key == 'p'){
 			mygotoxy(43, 28);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 
 			if (inventory.at(selection) > 0){
 				mygotoxy(43, 28);
@@ -770,28 +833,28 @@ int main(){
 				std::wcout << L"block...";
 				if (testRange(79, 24, player_x - x_offset - 1, player_y - y_offset)){
 					mygotoxy(player_x - x_offset - 1, player_y - y_offset);
-					textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), 0);
+					textColor(material_bgcolors.at(terrain.at(player_x - 1).at(player_y)), Color::BLACK);
 					std::wcout << L'◄';
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset - 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset - 1);
-					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), 0);
+					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y - 1)), Color::BLACK);
 					std::wcout << L'▲';
 				}
 				if (testRange(79, 24, player_x - x_offset + 1, player_y - y_offset)){
 					mygotoxy(player_x - x_offset + 1, player_y - y_offset);
-					textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), 0);
+					textColor(material_bgcolors.at(terrain.at(player_x + 1).at(player_y)), Color::BLACK);
 					std::wcout << L'►';
 				}
 				if (testRange(79, 24, player_x - x_offset, player_y - y_offset + 1)){
 					mygotoxy(player_x - x_offset, player_y - y_offset + 1);
-					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), 0);
+					textColor(material_bgcolors.at(terrain.at(player_x).at(player_y + 1)), Color::BLACK);
 					std::wcout << L'▼';
 				}
 
-				wchar_t direction = _getwch();
+				char direction = mygetch();
 
-				if (direction == L'w'){
+				if (direction == 'w'){
 					if (testRange(width, height, player_x, player_y - 1)){
 						inventory.at(selection) -= 1;
 						if (terrain.at(player_x).at(player_y - 1) == 1 && selection == 1){
@@ -803,7 +866,7 @@ int main(){
 						}
 					}
 				}
-				if (direction == L'a'){
+				if (direction == 'a'){
 					if (testRange(width, height, player_x - 1, player_y)){
 						inventory.at(selection) -= 1;
 						if (terrain.at(player_x - 1).at(player_y) == 1 && selection == 1){
@@ -815,7 +878,7 @@ int main(){
 						}
 					}
 				}
-				if (direction == L's'){
+				if (direction == 's'){
 					if (testRange(width, height, player_x, player_y + 1)){
 						inventory.at(selection) -= 1;
 						if (terrain.at(player_x).at(player_y + 1) == 1 && selection == 1){
@@ -827,7 +890,7 @@ int main(){
 						}
 					}
 				}
-				if (direction == L'd'){
+				if (direction == 'd'){
 					if (testRange(width, height, player_x + 1, player_y)){
 						inventory.at(selection) -= 1;
 						if (terrain.at(player_x + 1).at(player_y) == 1 && selection == 1){
@@ -871,17 +934,17 @@ int main(){
 			}
 
 			mygotoxy(43, 28);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			std::wcout << L"                              ";
 			mygotoxy(43, 29);
 			std::wcout << L"                              ";
 			mygotoxy(43, 30);
 			std::wcout << L"                              ";
 		}
-		if (key == L'h'){
-			drawBox(1, 1, 78, 23, L'░', 8, L"HELP", true);
+		if (key == 'h'){
+			drawBox(1, 1, 78, 23, L'░', Color::WHITE, L"HELP", true);
 
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			mygotoxy(3, 3);
 			std::wcout << L"Moving Around - use the keys 'w' (up), 'a' (left), 's' (down) and 'd'";
 			mygotoxy(3, 4);
@@ -922,17 +985,17 @@ int main(){
 			mygotoxy(3, 22);
 			std::wcout << L"     dirt to create doors)";
 
-			_getwch();
+			mygetch();
 			redraw = true;
 			redraw_player = true;
 		}
-		if (key >= 49 && key <= 56){
-			selection = key - 48;
+		if (key > '0' && key <= '8'){
+			selection = key - '0';
 		}
-		if (key == L'q'){
-			drawBox(19, 5, 59, 9, L'░', 8, L"ALERT", true);
+		if (key == 'q'){
+			drawBox(19, 5, 59, 9, L'░', Color::WHITE, L"ALERT", true);
 			mygotoxy(20, 6);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			std::wcout << L"Are you sure you want to quit? (y/n) ";
 			wchar_t answer = L'\0';
 			std::wcin >> answer;
@@ -943,7 +1006,7 @@ int main(){
 				redraw_player = true;
 			}
 		}
-		if (key == L'x'){
+		if (key == 'x'){
 			attack = true;
 		}
 
@@ -1249,7 +1312,7 @@ int main(){
 
 				if (testRange(79, 24, monster_x.at(i) - x_offset, monster_y.at(i) - y_offset)){
 					mygotoxy(monster_x.at(i) - x_offset, monster_y.at(i) - y_offset);
-					textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), 0);
+					textColor(material_bgcolors.at(terrain.at(monster_x.at(i)).at(monster_y.at(i))), Color::BLACK);
 					std::wcout << monster_chars.at(monster.at(i));
 				}
 			}
@@ -1259,7 +1322,7 @@ int main(){
 		if (redraw_player){
 			mygotoxy(player_x - x_offset, player_y - y_offset);
 			if (terrain.at(player_x).at(player_y) == 7){
-				textColor(0, 15);
+				textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			} else {
 				textColor(material_bgcolors.at(terrain.at(player_x).at(player_y)), material_bgcolors.at(terrain.at(player_x).at(player_y)));
 			}
@@ -1268,7 +1331,7 @@ int main(){
 
 		//redraw help
 		if (redraw_help){
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			mygotoxy(26, 27);
 			std::wcout << L"w - up";
 			mygotoxy(26, 28);
@@ -1291,21 +1354,21 @@ int main(){
 		for (int i = 1; i <= 8; i++){
 			mygotoxy(2, 26 + i);
 			if (i == selection){
-				textColor(0, 14);
+				textColor(Color::BLACK, Color::BRIGHT_YELLOW);
 			} else {
-				textColor(0, 15);
+				textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			}
 			std::wcout << i << L" " << material_names.at(i) << L" \t";
 			textColor(material_bgcolors.at(i), material_fgcolors.at(i));
 			std::wcout << material_chars.at(i);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			std::wcout << L" " << inventory.at(i) << L" ";
 		}
 
 		//redraw info box
 		if (redraw_info){
 			mygotoxy(43, 27);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			if (terrain.at(player_x).at(player_y) == 4){
 				std::wcout << L"You are standing in water.";
 			} else if (terrain.at(player_x).at(player_y) == 5){
@@ -1338,11 +1401,11 @@ int main(){
 			std::wcout << material_chars.at(temp_material);
 
 			if (terrain.at(player_x).at(player_y) == 4){
-				Sleep(100);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
 			mygotoxy(43, 27);
-			textColor(0, 15);
+			textColor(Color::BLACK, Color::BRIGHT_WHITE);
 			if (terrain.at(player_x).at(player_y) == 4){
 				std::wcout << L"You are standing in water.     ";
 			} else if (terrain.at(player_x).at(player_y) == 5){
@@ -1353,10 +1416,10 @@ int main(){
 		}
 
 		mygotoxy(0, 0);
-		textColor(0, 15);
+		textColor(Color::BLACK, Color::BRIGHT_WHITE);
 
 		if (!quit){
-			key = _getwch();
+			key = mygetch();
 		}
 	}
 
