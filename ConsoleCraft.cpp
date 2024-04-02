@@ -15,19 +15,19 @@ void restrictToRange(int width, int height, int &x, int &y){
     if (x < 0){
         x = 0;
     }
-    if (x > width){
-        x = width;
+    if (x >= width){
+        x = width - 1;
     }
     if (y < 0){
         y = 0;
     }
-    if (y > height){
-        y = height;
+    if (y >= height){
+        y = height - 1;
     }
 }
 
 bool testRange(int width, int height, int x, int y){
-    return (x >= 0) && (x <= width) && (y >= 0) && (y <= height);
+    return (x >= 0) && (x < width) && (y >= 0) && (y < height);
 }
 
 void mygotoxy(short x, short y){
@@ -120,6 +120,7 @@ void textColor(Color bg_color, Color text_color){
 }
 
 void clearScreen(){
+    textColor(Color::BLACK, Color::WHITE);
     std::cout << "\033[2J";
 }
 
@@ -151,86 +152,11 @@ void drawBox(int sx, int sy, int ex, int ey, char const* symbol, Color symbol_co
     std::cout << title;
 }
 
-int main(){
-    clearScreen();
-    mygotoxy(0, 0);
-    textColor(Color::GREEN, Color::BRIGHT_WHITE);
-    std::cout << "                                                                                \n";
-    std::cout << "                                  Welcome to                                    \n";
-    std::cout << "                                                                                \n";
-    textColor(Color::BLUE, Color::BRIGHT_GREEN);
-    std::cout << "                                                                                \n";
-    std::cout << "              ### ### #   # ### ### #   ###    ### ###  #  ### ###              \n";
-    std::cout << "              #   # # ##  # #   # # #   #      #   # # # # #    #               \n";
-    std::cout << "              #   # # # # # ### # # #   ##  ## #   ### ### ##   #               \n";
-    std::cout << "              #   # # #  ##   # # # #   #      #   ##  # # #    #               \n";
-    std::cout << "              ### ### #   # ### ### ### ###    ### # # # # #    #               \n";
-    std::cout << "                                                                                \n";
-    textColor(Color::GREEN, Color::BRIGHT_WHITE);
-    std::cout << "                              By Tim Straubinger                                \n";
-    std::cout << "                                                                                \n";
-
-    mygotoxy(20, 15);
-    textColor(Color::BLACK, Color::BRIGHT_WHITE);
-    std::cout << "Enter a world seed (0 for random one): ";
-
-    unsigned int seed;
-
-    std::cin >> seed;
-
-    if (seed == 0){
-        seed = (unsigned)time(0);
-    }
-    srand(seed);
-
-    int difficulty = 0;
-
-    mygotoxy(25, 18);
-    std::cout << "1 - Piece of cake";
-    mygotoxy(25, 19);
-    std::cout << "2 - Moderate";
-    mygotoxy(25, 20);
-    std::cout << "3 - Tricky";
-    mygotoxy(25, 21);
-    std::cout << "4 - Extreme";
-    mygotoxy(20, 17);
-    std::cout << "Please select a difficulty: ";
-    while (!(difficulty >= 1 && difficulty <= 4)){
-        std::cin >> difficulty;
-        if (difficulty < 1 || difficulty > 4){
-            drawLine(0, 17, 79, 17, " ", Color::BRIGHT_WHITE);
-            mygotoxy(20, 17);
-            std::cout << "Please select a VALID difficulty: ";
-        }
-    }
-
-    clearScreen();
-
-
-    std::cout << "\n\n\t\tCreating materials...\n";
-
-    //define materials
-    const size_t num_materials = 12;
-    const std::array<std::string, num_materials> material_names = {"air", "stone", "dirt", "sand", "water", "plant", "grass", "snow", "ore", "wal", "door", "bedrock"};
-    const std::array<Color, num_materials> material_bgcolors = {
-        Color::BLACK, Color::WHITE,         Color::RED,     Color::BRIGHT_YELLOW,   Color::BLUE,        Color::GREEN,           Color::GREEN,   Color::BRIGHT_WHITE,    Color::WHITE,   Color::WHITE,   Color::RED,     Color::WHITE};
-    const std::array<Color, num_materials> material_fgcolors = {
-        Color::BLACK, Color::BRIGHT_WHITE,  Color::GREEN,   Color::BRIGHT_WHITE,    Color::BRIGHT_BLUE, Color::BRIGHT_GREEN,    Color::GREEN,   Color::BLACK,           Color::YELLOW,  Color::BLACK,   Color::WHITE,   Color::BLACK};
-    const std::array<std::string, num_materials> material_chars = {u8" ", u8"░", u8"▒", u8"▒", u8"≈", u8"♣", u8" ", u8" ", u8"♦", u8"╬", u8"■", u8"░"};
-
-    std::array<int, num_materials> inventory = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-    std::array<int, num_materials> underlying_material = {0, 11, 1, 2, 4, 6, 2, 1, 1, 1, 2, 1};
-
-    std::cout << "\t\tGenerating terrain...\n";
-
-    //generate terrain
-    const int width = 500, height = 500;
-    std::array<std::array<int, 501>, 501> terrain;
-
+template<size_t width, size_t height>
+void generateWorld(std::array<std::array<int, height>, width>& terrain) {
     //turn everything into grass
-    for (int x = 0; x <= width; x++){
-        for (int y = 0; y <= height; y++){
+    for (int x = 0; x < width; x++){
+        for (int y = 0; y < height; y++){
             terrain.at(x).at(y) = 2;
         }
     }
@@ -465,6 +391,90 @@ int main(){
             y += rand() % 3 - 1;
         }
     }
+}
+
+void drawMenu() {
+    // TODO
+}
+
+int main(){
+    clearScreen();
+    mygotoxy(0, 0);
+    textColor(Color::GREEN, Color::BRIGHT_WHITE);
+    std::cout << "                                                                                \n";
+    std::cout << "                                  Welcome to                                    \n";
+    std::cout << "                                                                                \n";
+    textColor(Color::BLUE, Color::BRIGHT_GREEN);
+    std::cout << "                                                                                \n";
+    std::cout << "              ### ### #   # ### ### #   ###    ### ###  #  ### ###              \n";
+    std::cout << "              #   # # ##  # #   # # #   #      #   # # # # #    #               \n";
+    std::cout << "              #   # # # # # ### # # #   ##  ## #   ### ### ##   #               \n";
+    std::cout << "              #   # # #  ##   # # # #   #      #   ##  # # #    #               \n";
+    std::cout << "              ### ### #   # ### ### ### ###    ### # # # # #    #               \n";
+    std::cout << "                                                                                \n";
+    textColor(Color::GREEN, Color::BRIGHT_WHITE);
+    std::cout << "                              By Tim Straubinger                                \n";
+    std::cout << "                                                                                \n";
+
+    mygotoxy(20, 15);
+    textColor(Color::BLACK, Color::BRIGHT_WHITE);
+    std::cout << "Enter a world seed (0 for random one): ";
+
+    unsigned int seed;
+
+    std::cin >> seed;
+
+    if (seed == 0){
+        seed = (unsigned)time(0);
+    }
+    srand(seed);
+
+    int difficulty = 0;
+
+    mygotoxy(25, 18);
+    std::cout << "1 - Piece of cake";
+    mygotoxy(25, 19);
+    std::cout << "2 - Moderate";
+    mygotoxy(25, 20);
+    std::cout << "3 - Tricky";
+    mygotoxy(25, 21);
+    std::cout << "4 - Extreme";
+    mygotoxy(20, 17);
+    std::cout << "Please select a difficulty: ";
+    while (!(difficulty >= 1 && difficulty <= 4)){
+        std::cin >> difficulty;
+        if (difficulty < 1 || difficulty > 4){
+            drawLine(0, 17, 79, 17, " ", Color::BRIGHT_WHITE);
+            mygotoxy(20, 17);
+            std::cout << "Please select a VALID difficulty: ";
+        }
+    }
+
+    clearScreen();
+
+
+    std::cout << "\n\n\t\tCreating materials...\n";
+
+    //define materials
+    const size_t num_materials = 12;
+    const std::array<std::string, num_materials> material_names = {"air", "stone", "dirt", "sand", "water", "plant", "grass", "snow", "ore", "wal", "door", "bedrock"};
+    const std::array<Color, num_materials> material_bgcolors = {
+        Color::BLACK, Color::GREY,         Color::RED,     Color::BRIGHT_YELLOW,   Color::BLUE,        Color::GREEN,           Color::GREEN,   Color::BRIGHT_WHITE,    Color::WHITE,   Color::WHITE,   Color::RED,     Color::WHITE};
+    const std::array<Color, num_materials> material_fgcolors = {
+        Color::BLACK, Color::WHITE,  Color::GREEN,   Color::BRIGHT_WHITE,    Color::BRIGHT_BLUE, Color::BRIGHT_GREEN,    Color::GREEN,   Color::BLACK,           Color::YELLOW,  Color::BLACK,   Color::WHITE,   Color::BLACK};
+    const std::array<std::string, num_materials> material_chars = {u8" ", u8"░", u8"▒", u8"▒", u8"≈", u8"♣", u8" ", u8" ", u8"♦", u8"╬", u8"■", u8"░"};
+
+    std::array<int, num_materials> inventory = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    std::array<int, num_materials> underlying_material = {0, 11, 1, 2, 4, 6, 2, 1, 1, 1, 2, 1};
+
+    std::cout << "\t\tGenerating terrain...\n";
+
+    //generate terrain
+    const int width = 500, height = 500;
+    std::array<std::array<int, 500>, 500> terrain;
+
+    generateWorld(terrain);
 
     std::cout << "\t\tPreparing game...";
 
